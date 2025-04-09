@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Fraud Detection Model Trainer</h1>
+
+    <!-- Model Training Section -->
+    <h2>Train a Model</h2>
+    <form id="trainForm">
+        <label for="model_choice">Select Model:</label>
+        <select id="model_choice" name="model_choice" required>
+            <option value="LogisticRegression">Logistic Regression</option>
+            <option value="DecisionTree">Decision Tree</option>
+            <option value="RandomForest">Random Forest</option>
+            <option value="KNN">K-Nearest Neighbors (KNN)</option>
+        </select><br><br>
+
+        <button type="submit">Train Model</button>
+    </form>
+
+    <div class="result" id="trainResult"></div>
+    <div class="result" id="lastTrainedModel"></div>
+
+    <!-- Fraud Prediction Section -->
+    <h2>Predict Fraud</h2>
+    <form id="predictForm">
+        <label for="amt">Transaction Amount (amt):</label>
+        <input type="number" step="0.01" id="amt" name="amt" required><br><br>
+        
+        <label for="trans_num">Transaction Number (trans_num):</label>
+        <input type="number" id="trans_num" name="trans_num" required><br><br>
+        
+        <button type="submit">Predict Fraud</button>
+    </form>
+
+    <div class="result" id="predictResult"></div>
+
+    <script>
+        const trainForm = document.getElementById('trainForm');
+        const trainResultDiv = document.getElementById('trainResult');
+        const lastTrainedModelDiv = document.getElementById('lastTrainedModel');
+
+        trainForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(trainForm);
+
+            fetch('/train', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    trainResultDiv.textContent = `Error: ${data.error}`;
+                    trainResultDiv.style.color = 'red';
+                } else {
+                    const selectedModel = document.getElementById('model_choice').value;
+                    trainResultDiv.textContent = data.result;
+                    trainResultDiv.style.color = 'green';
+
+                    // Display the name of the last trained model
+                    lastTrainedModelDiv.textContent = `Last Trained Model: ${selectedModel}`;
+                    lastTrainedModelDiv.style.color = '#333';
+                }
+            })
+            .catch(error => {
+                trainResultDiv.textContent = `Error: ${error}`;
+                trainResultDiv.style.color = 'red';
+            });
+        });
+
+        const predictForm = document.getElementById('predictForm');
+        const predictResultDiv = document.getElementById('predictResult');
+
+        predictForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(predictForm);
+            const data = new URLSearchParams();
+
+            for (const pair of formData) {
+                data.append(pair[0], pair[1]);
+            }
+
+            fetch('/predict', {
+                method: 'POST',
+                body: data
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    predictResultDiv.textContent = `Error: ${data.error}`;
+                    predictResultDiv.style.color = 'red';
+                } else {
+                    predictResultDiv.textContent = data.result;
+                    predictResultDiv.style.color = data.color;
+                }
+            })
+            .catch(error => {
+                predictResultDiv.textContent = `Error: ${error}`;
+                predictResultDiv.style.color = 'red';
+            });
+        });
+    </script>
+</body>
+</html>
